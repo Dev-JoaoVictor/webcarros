@@ -9,14 +9,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const schema = z.object({
-  email: z.string().min(1, "O campo email é obrigatório").email("Insira um e-mail válido."),
-  password: z.string().min(1, "O campo senha é obrigatório")
+  name: z.string().min(1, "O campo nome é obrigatório"),
+  email: z.string()
+    .min(1, "O campo email é obrigatório").email("Insira um e-mail válido."),
+  password: z.string().min(6, "A senha deve conter pelo menos 6 caracteres")
 
 })
 
 type FormData = z.infer<typeof schema>
 
-export function SignIn() {
+export function Register() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -34,6 +36,17 @@ export function SignIn() {
           <img src={logo} alt="Logo do site" className="w-full" />
         </Link>
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-4 flex flex-col gap-5 max-w-md w-full rounded-lg">
+
+          <div>
+            <Input
+              type="text"
+              placeholder="Digite seu nome"
+              name="name"
+              error={errors.name?.message}
+              register={register}
+            />
+          </div>
+
           <div>
             <Input
               type="text"
@@ -57,11 +70,11 @@ export function SignIn() {
           <button
             type="submit"
             className="bg-zinc-900 w-full rounded-md text-white h-14 font-medium">
-            Acessar
+            Cadastrar
           </button>
         </form>
-        <Link to="/register" className="text-zinc-900 font-medium">
-          Ainda não possui uma conta ? Cadastre-se agora!
+        <Link to="/signin" className="text-zinc-900 font-medium">
+          Já possui uma conta ? Acesse agora!
         </Link>
       </div>
     </Container>
