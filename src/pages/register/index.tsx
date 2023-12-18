@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../../components/input";
 import { Container } from "../../components/container";
 
@@ -7,6 +7,8 @@ import logo from '../../assets/logo.svg'
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { auth } from "../../services/firebaseConnection";
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
 
 const schema = z.object({
   name: z.string().min(1, "O campo nome é obrigatório"),
@@ -20,13 +22,25 @@ type FormData = z.infer<typeof schema>
 
 export function Register() {
 
+  const navigate = useNavigate();
+
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onChange"
   })
 
-  function onSubmit(data: FormData) {
-    console.log(data);
+  async function onSubmit(data: FormData) {
+    createUserWithEmailAndPassword(auth, data.email, data.password)
+      .then(async (user) => {
+        await updateProfile(user.user, { displayName: data.name })
+
+        console.log("Cadastrado com sucesso", user)
+        navigate("/dashboard", { replace: true })
+      })
+      .catch((error) => {
+        console.log("Erro ao cadastrar", error)
+      })
+
   }
 
   return (
@@ -73,7 +87,7 @@ export function Register() {
             Cadastrar
           </button>
         </form>
-        <Link to="/signin" className="text-zinc-900 font-medium">
+        <Link to="/signin" className="text-zinc-900 font-medium text-center hover:opacity-50">
           Já possui uma conta ? Acesse agora!
         </Link>
       </div>

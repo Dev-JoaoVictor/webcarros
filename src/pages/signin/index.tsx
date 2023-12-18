@@ -60,7 +60,7 @@ export function SignIn() {
             Acessar
           </button>
         </form>
-        <Link to="/register" className="text-zinc-900 font-medium">
+        <Link to="/register" className="text-zinc-900 font-medium text-center hover:opacity-50">
           Ainda não possui uma conta ? Cadastre-se agora!
         </Link>
       </div>

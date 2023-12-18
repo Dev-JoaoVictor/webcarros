@@ -25,7 +25,7 @@ export function Input({
         placeholder={placeholder}
         {...register(name, rules)}
         id={name}
-        className={`w-full border-2 rounded-md h-14 px-3 outline-none ${error && "border-red-600"} `} />
+        className={`w-full border-2 rounded-md h-14 px-3 outline-none ${error && "tra ease-in-out border-red-600"} `} />
       {error && <p className="text-red-500">{error}</p>}
     </div>
   )
