@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+
 import { Input } from "../../components/input";
+import { Link, useNavigate } from "react-router-dom";
 import { Container } from "../../components/container";
 
 import logo from '../../assets/logo.svg'
@@ -7,6 +9,9 @@ import logo from '../../assets/logo.svg'
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { auth } from "../../services/firebaseConnection";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import toast from "react-hot-toast";
 
 const schema = z.object({
   email: z.string().min(1, "O campo email é obrigatório").email("Insira um e-mail válido."),
@@ -18,13 +23,32 @@ type FormData = z.infer<typeof schema>
 
 export function SignIn() {
 
+  const navigate = useNavigate();
+
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onChange"
   })
 
+
+  useEffect(() => {
+    async function handleLogout() {
+      await signOut(auth)
+    }
+
+    handleLogout();
+  }, [])
+
   function onSubmit(data: FormData) {
-    console.log(data);
+    signInWithEmailAndPassword(auth, data.email, data.password)
+      .then((user) => {
+        toast.success("Usuário logado com sucesso!")
+        navigate("/", { replace: true });
+      })
+      .catch((error) => {
+        toast.error("Error ao logar usuário!")
+        return
+      })
   }
 
   return (

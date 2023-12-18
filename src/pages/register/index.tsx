@@ -1,14 +1,16 @@
-import { Link, useNavigate } from "react-router-dom";
 import { Input } from "../../components/input";
+import { Link, useNavigate } from "react-router-dom";
 import { Container } from "../../components/container";
 
 import logo from '../../assets/logo.svg'
 
 import { z } from "zod";
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { auth } from "../../services/firebaseConnection";
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth'
 
 const schema = z.object({
   name: z.string().min(1, "O campo nome é obrigatório"),
@@ -29,16 +31,23 @@ export function Register() {
     mode: "onChange"
   })
 
+  useEffect(() => {
+    async function handleLogout() {
+      await signOut(auth)
+    }
+
+    handleLogout();
+  }, [])
+
   async function onSubmit(data: FormData) {
     createUserWithEmailAndPassword(auth, data.email, data.password)
       .then(async (user) => {
         await updateProfile(user.user, { displayName: data.name })
-
-        console.log("Cadastrado com sucesso", user)
-        navigate("/dashboard", { replace: true })
+        toast.success("Usuário cadastrado com sucesso!")
+        navigate("/", { replace: true });
       })
       .catch((error) => {
-        console.log("Erro ao cadastrar", error)
+        toast.error("Erro ao cadastrado usuário!")
       })
 
   }
