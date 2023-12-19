@@ -1,7 +1,12 @@
-export function Dashboard(){
+import { Container } from "../../components/container";
+import { Navbar } from "../../components/navbar";
+
+export function Dashboard() {
   return (
-    <div>
-      <h1>Dashboard</h1>
-    </div>  
+    <div >
+      <Container>
+        <Navbar />
+      </Container>
+    </div>
   )
 }
