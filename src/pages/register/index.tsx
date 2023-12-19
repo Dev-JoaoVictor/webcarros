@@ -1,16 +1,18 @@
+import { useEffect, useContext } from "react";
 import { Input } from "../../components/input";
 import { Link, useNavigate } from "react-router-dom";
 import { Container } from "../../components/container";
 
+import toast from "react-hot-toast";
 import logo from '../../assets/logo.svg'
 
 import { z } from "zod";
-import { useEffect } from "react";
-import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { auth } from "../../services/firebaseConnection";
 import { createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth'
+
+import { auth } from "../../services/firebaseConnection";
+import { AuthContext } from "../../contexts/AuthContext";
 
 const schema = z.object({
   name: z.string().min(1, "O campo nome é obrigatório"),
@@ -23,6 +25,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export function Register() {
+  const { handleInfoUser } = useContext(AuthContext);
 
   const navigate = useNavigate();
 
@@ -43,6 +46,13 @@ export function Register() {
     createUserWithEmailAndPassword(auth, data.email, data.password)
       .then(async (user) => {
         await updateProfile(user.user, { displayName: data.name })
+
+        handleInfoUser({
+          uid: user.user.uid,
+          name: user.user.displayName,
+          email: user.user.email,
+        })
+        
         toast.success("Usuário cadastrado com sucesso!")
         navigate("/", { replace: true });
       })
