@@ -1,12 +1,20 @@
 import { Navbar } from "../../components/navbar";
 import { Container } from "../../components/container";
 
-import { FiUpload } from "react-icons/fi";
+import { FiTrash, FiUpload } from "react-icons/fi";
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { Input } from "../../components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+import { ChangeEvent, useContext, useState } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
+
+import { storage } from "../../services/firebaseConnection";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+
+import { v4 as uuidV4 } from 'uuid';
 
 const schema = z.object({
   name: z.string().min(1, "O nome é obrigatório"),
@@ -21,7 +29,17 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+interface ImageItemProps {
+  uuid: string;
+  name: string;
+  previewUrl: string;
+  url: string;
+}
+
 export function New() {
+
+  const { user } = useContext(AuthContext);
+  const [cartImages, setCartImages] = useState<ImageItemProps[]>([]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema)
@@ -29,6 +47,54 @@ export function New() {
 
   function onSubmit(data: FormData) {
     console.log(data)
+  }
+
+  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files[0]) {
+      const image = e.target.files[0];
+
+      if (image.type === "image/jpeg" || image.type === "image/png") {
+        await handleUpload(image);
+      } else {
+        alert("Envie uma imagem no formato: JPEG ou PNG");
+      }
+
+    }
+  }
+
+  async function handleDeleteImage(item: ImageItemProps){
+    const newImages = cartImages.filter(image => image.name !== item.name);
+    setCartImages(newImages);
+
+    const uploadRef = ref(storage, `images/${item.uuid}/${item.name}`);
+    deleteObject(uploadRef);
+  }
+
+  async function handleUpload(image: File) {
+
+    if (!user?.uid) {
+      return alert("Você precisa estar logado para fazer isso")
+    }
+
+    const currentUser = user.uid;
+    const uuidImage = uuidV4();
+
+    const uploadRef = ref(storage, `images/${currentUser}/${uuidImage}`);
+
+    uploadBytes(uploadRef, image)
+      .then((snaphot) => {
+        getDownloadURL(snaphot.ref).then((downloadURL) => {
+
+          const imageItem = {
+            name: uuidImage,
+            uuid: currentUser,
+            previewUrl: URL.createObjectURL(image),
+            url: downloadURL,
+          }
+
+          setCartImages((image) => [...image, imageItem]);
+        })
+      })
   }
 
   return (
@@ -40,9 +106,25 @@ export function New() {
             <FiUpload size={30} />
           </div>
           <div className="cursor-pointer ">
-            <input type="file" accept="image/" className="opacity-0" />
+            <input type="file" accept="image/" className="opacity-0" onChange={handleFile} />
           </div>
         </button>
+
+        {
+          cartImages.map(item => (
+            <div key={item.name} className="w-full h-32 flex items-center justify-center relative">
+              <button className="absolute p-2 rounded-lg hover:bg-red-500 transition-all" onClick={() => handleDeleteImage(item)}>
+                <FiTrash size={28} color="#fff" />
+              </button>
+              <img
+                src={item.previewUrl}
+                alt={item.name}
+                className="rounded-md w-full h-32 object-cover"
+              />
+            </div>
+          ))
+        }
+
       </div>
 
       <form
