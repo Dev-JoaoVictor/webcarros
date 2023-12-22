@@ -1,6 +1,65 @@
 import { Container } from "../../components/container";
 
+import { useState, useEffect } from "react";
+
+import { db } from "../../services/firebaseConnection";
+import { collection, query, getDocs, orderBy } from "firebase/firestore";
+import { Link } from "react-router-dom";
+
+interface CarsProps {
+  id: string;
+  name: string;
+  year: number;
+  uid: string;
+  price: string | number;
+  city: string;
+  km: string;
+  image: CarImageProps[];
+}
+
+interface CarImageProps {
+  name: string;
+  uid: string;
+  url: string;
+}
+
 export function Home() {
+
+  const [cars, setCars] = useState<CarsProps[]>([]);
+  const [loadImages, setLoadImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    function loadCars() {
+      const carsRef = collection(db, 'cars');
+      const queryRef = query(carsRef, orderBy('createdAt', 'desc'));
+
+      getDocs(queryRef).then((snapshot) => {
+        let listCars = [] as CarsProps[];
+
+        snapshot.forEach((car) => {
+          listCars.push({
+            id: car.id,
+            name: car.data().name,
+            year: car.data().year,
+            uid: car.data().uid,
+            price: car.data().price,
+            city: car.data().city,
+            km: car.data().km,
+            image: car.data().images
+          })
+        })
+
+        setCars(listCars);
+      })
+    }
+
+    loadCars();
+  }, [])
+
+  function handleImageLoad(id: string) {
+    setLoadImages(oldState => [...oldState, id]);
+  }
+
   return (
     <Container>
       <section className="bg-white p-4 rounded-lg w-full max-w-3xl mx-auto flex justify-center items-center gap-2">
@@ -11,19 +70,36 @@ export function Home() {
       <h1 className="font-bold text-center mt-6 text-2xl mb-4">Carros novos e usados em todo o Brasil!</h1>
 
       <main className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <section className="w-full bg-white text-black rounded-md hover:scale-105 transition-allshadow-2xl">
-          <img className="w-full mb-3 max-h-72 rounded-t-md" src="https://image.webmotors.com.br/_fotos/AnuncioNovos/gigante/2023/202312/20231206/NISSAN-KICKS-1.6-16V-FLEXSTART-ACTIVE-XTRONIC-wmimagem12084063613.jpg?s=fill&w=249&h=186&q=70" alt="" />
-          <div className="px-2">
-            <p className="font-bold">BMW 320I</p>
-            <div className="flex flex-col">
-              <span className="text-zinc-700 mb-6">ano 2020/2020 | 23.000 KM</span>
-              <strong className="text-black font-medium text-xl">R$ 150.000</strong>
-            </div>
-            <div className="border-t-2 border-b-gray-700 my-2 pb-2">
-              <p className="text-black mt-2">São Paulo - SP</p>
-            </div>
-          </div>
-        </section>
+        {
+          cars.map((car) => (
+            <Link key={car.id} to={`/car/${car.id}`}>
+              <section className="w-full bg-white text-black rounded-md hover:scale-105 transition-allshadow-2xl">
+                <div
+                  className="w-full h-72 rounded-md bg-slate-200"
+                  style={{ display: loadImages.includes(car.id) ? "none" : "block" }}
+                >
+                </div>
+                <img
+                  className="w-full mb-3 max-h-72 rounded-t-md"
+                  src={car.image[0].url}
+                  alt={car.name}
+                  onLoad={() => handleImageLoad(car.id)}
+                  style={{ display: loadImages.includes(car.id) ? "block" : "none" }}
+                />
+                <div className="px-2">
+                  <p className="font-bold">{car.name}</p>
+                  <div className="flex flex-col">
+                    <span className="text-zinc-700 mb-6">ano {car.year} | {car.km} KM</span>
+                    <strong className="text-black font-medium text-xl">R$ {car.price}</strong>
+                  </div>
+                  <div className="border-t-2 border-b-gray-700 my-2 pb-2">
+                    <p className="text-black mt-2">{car.city}</p>
+                  </div>
+                </div>
+              </section>
+            </Link>
+          ))
+        }
       </main>
     </Container>
   )
