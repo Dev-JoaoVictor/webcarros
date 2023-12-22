@@ -11,10 +11,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChangeEvent, useContext, useState } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 
-import { storage } from "../../services/firebaseConnection";
+import { addDoc, collection } from "firebase/firestore";
+import { storage, db } from "../../services/firebaseConnection";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 import { v4 as uuidV4 } from 'uuid';
+import toast from "react-hot-toast";
 
 const schema = z.object({
   name: z.string().min(1, "O nome é obrigatório"),
@@ -41,12 +43,46 @@ export function New() {
   const { user } = useContext(AuthContext);
   const [cartImages, setCartImages] = useState<ImageItemProps[]>([]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
     resolver: zodResolver(schema)
   })
 
   function onSubmit(data: FormData) {
-    console.log(data)
+
+    if (cartImages.length === 0) {
+      return toast.error("Você precisa enviar pelo menos uma imagem do carro");
+    }
+
+    const cartListImages = cartImages.map(item => {
+      return {
+        url: item.url,
+        name: item.name,
+        uuid: item.uuid,
+      }
+    })
+
+    addDoc(collection(db, "cars"), {
+      name: data.name,
+      model: data.model,
+      year: data.year,
+      km: data.km,
+      price: data.price,
+      city: data.city,
+      whatsapp: data.whatsapp,
+      description: data.description,
+      images: cartListImages,
+      uid: user?.uid,
+      owner: user?.name,
+      createdAt: new Date(),
+    })
+      .then(() => {
+        toast.success("Carro cadastrado com sucesso!");
+        reset();
+        setCartImages([]);
+      })
+      .catch((error) => {
+        toast.error("Erro ao cadastrar carro!");
+      })
   }
 
   async function handleFile(e: ChangeEvent<HTMLInputElement>) {
@@ -56,13 +92,13 @@ export function New() {
       if (image.type === "image/jpeg" || image.type === "image/png") {
         await handleUpload(image);
       } else {
-        alert("Envie uma imagem no formato: JPEG ou PNG");
+        toast.error("Envie uma imagem no formato: JPEG ou PNG");
       }
 
     }
   }
 
-  async function handleDeleteImage(item: ImageItemProps){
+  async function handleDeleteImage(item: ImageItemProps) {
     const newImages = cartImages.filter(image => image.name !== item.name);
     setCartImages(newImages);
 
@@ -73,7 +109,7 @@ export function New() {
   async function handleUpload(image: File) {
 
     if (!user?.uid) {
-      return alert("Você precisa estar logado para fazer isso")
+      return toast.error("Você precisa estar logado para fazer isso")
     }
 
     const currentUser = user.uid;
