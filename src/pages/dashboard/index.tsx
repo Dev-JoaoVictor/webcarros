@@ -4,9 +4,10 @@ import { Container } from "../../components/container";
 import { FiTrash } from 'react-icons/fi'
 import { useEffect, useState, useContext } from "react";
 
-import { db } from "../../services/firebaseConnection";
-import { collection, query, doc, getDocs, where, deleteDoc } from "firebase/firestore";
 import { AuthContext } from "../../contexts/AuthContext";
+import { ref, deleteObject } from 'firebase/storage'
+import { db, storage } from "../../services/firebaseConnection";
+import { collection, query, doc, getDocs, where, deleteDoc } from "firebase/firestore";
 
 interface CarsProps {
   id: string;
@@ -16,12 +17,12 @@ interface CarsProps {
   price: string | number;
   city: string;
   km: string;
-  image: CarImageProps[];
+  images: CarImageProps[];
 }
 
 interface CarImageProps {
   name: string;
-  uid: string;
+  uuid: string;
   url: string;
 }
 
@@ -52,7 +53,7 @@ export function Dashboard() {
             price: car.data().price,
             city: car.data().city,
             km: car.data().km,
-            image: car.data().images
+            images: car.data().images
           })
         })
 
@@ -67,10 +68,23 @@ export function Dashboard() {
     setLoadImages(oldState => [...oldState, id]);
   }
 
-  async function handleDeleteCar(id: string) {
-    const docRef = doc(db, "cars", id)
+  async function handleDeleteCar(car: CarsProps) {
+    const itemCar = car
+    const docRef = doc(db, "cars", car.id)
     await deleteDoc(docRef)
-    setCars(cars.filter(car => car.id !== id))
+
+    itemCar.images.map(async (image) => {
+      const imagePath = `images/${image?.uuid}/${image.name}`
+      const imageRef = ref(storage, imagePath)
+
+      try {
+        await deleteObject(imageRef)
+        setCars(cars.filter(car => car.id !== itemCar.id))
+      } catch (error) {
+        console.log("Erro ao excluir essa imagem")
+      }
+
+    })
   }
 
   return (
@@ -89,14 +103,14 @@ export function Dashboard() {
                 >
                 </div>
                 <button
-                  onClick={() => handleDeleteCar(car.id)}
+                  onClick={() => handleDeleteCar(car)}
                   className="absolute bg-white w-14 h-14 rounded-full flex items-center justify-center right-2 drop-shadow"
                 >
                   <FiTrash size={26} color="#000" />
                 </button>
                 <img
                   className="w-full mb-3 max-h-72 rounded-t-md"
-                  src={car.image[0].url}
+                  src={car.images[0].url}
                   alt={car.name}
                   onLoad={() => handleImageLoad(car.id)}
                   style={{ display: loadImages.includes(car.id) ? "block" : "none" }}
