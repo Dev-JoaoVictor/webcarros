@@ -72,7 +72,7 @@ export function Home() {
       <main className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {
           cars.map((car) => (
-            <Link key={car.id} to={`/car/${car.id}`}>
+            <Link key={car.id} to={`/details/${car.id}`}>
               <section className="w-full bg-white text-black rounded-md hover:scale-105 transition-allshadow-2xl">
                 <div
                   className="w-full h-72 rounded-md bg-slate-200"

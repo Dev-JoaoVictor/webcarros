@@ -8,6 +8,7 @@ import { Layout } from "./components/layout";
 import { New } from "./pages/new";
 import { Private } from "./routes/private";
 import { Dashboard } from "./pages/dashboard";
+import { Details } from "./pages/details";
 
 export const router = createBrowserRouter([
   {
@@ -15,7 +16,8 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/dashboard', element: <Private><Dashboard /></Private> },
-      { path: '/dashboard/new', element: <Private><New /></Private> }
+      { path: '/dashboard/new', element: <Private><New /></Private> },
+      { path: '/details/:id', element: <Details /> }
 
     ]
   },
