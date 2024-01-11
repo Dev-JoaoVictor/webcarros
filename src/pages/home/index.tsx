@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { db } from "../../services/firebaseConnection";
 import { collection, query, getDocs, orderBy, where } from "firebase/firestore";
 import { Link } from "react-router-dom";
-import { set } from "firebase/database";
 
 interface CarsProps {
   id: string;

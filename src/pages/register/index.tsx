@@ -57,7 +57,7 @@ export function Register() {
         navigate("/", { replace: true });
       })
       .catch((error) => {
-        toast.error("Erro ao cadastrado usuário!")
+        toast.error("Erro ao cadastrado usuário!", error)
       })
 
   }

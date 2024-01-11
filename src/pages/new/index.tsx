@@ -81,7 +81,7 @@ export function New() {
         setCartImages([]);
       })
       .catch((error) => {
-        toast.error("Erro ao cadastrar carro!");
+        toast.error("Erro ao cadastrar carro!", error);
       })
   }
 

@@ -1,6 +1,6 @@
 import logo from '../../assets/logo.svg';
 
-import { Context, useContext } from 'react';
+import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 

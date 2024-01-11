@@ -41,12 +41,12 @@ export function SignIn() {
 
   function onSubmit(data: FormData) {
     signInWithEmailAndPassword(auth, data.email, data.password)
-      .then((user) => {
+      .then(() => {
         toast.success("Usuário logado com sucesso!")
         navigate("/", { replace: true });
       })
       .catch((error) => {
-        toast.error("Error ao logar usuário!")
+        toast.error("Error ao logar usuário!", error)
         return
       })
   }
